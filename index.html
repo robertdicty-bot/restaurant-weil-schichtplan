@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Restaurant Weil – Schichtplan</title>
+<style>
+:root{--bg:#f3f4f6;--card:#fff;--text:#151515;--muted:#687386;--border:#dfe3e8;--k:#fff2d7;--k2:#fffaf1;--s:#e7f1ff;--s2:#f7fbff;--ok:#e9f8ed;--warn:#fff5d9;--bad:#ffe8e8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,Helvetica,sans-serif;color:var(--text)}
+.page{max-width:1800px;margin:auto;padding:26px 20px 40px}header{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:18px}
+h1{font-size:34px;margin:0 0 5px}.subtitle{font-size:19px;color:var(--muted)}button{font:inherit;font-weight:700;border:1px solid var(--border);background:#fff;border-radius:11px;padding:10px 15px;cursor:pointer}
+button:hover{background:#f7f7f7}.actions{display:flex;gap:9px}.dbstate{font-size:13px;color:var(--muted);margin-top:8px}
+.weekbar{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px;display:grid;grid-template-columns:180px 1fr 180px;align-items:center;gap:10px;margin-bottom:18px}.weektitle{text-align:center;font-size:21px;font-weight:750}
+.teams{display:grid;grid-template-columns:1fr 1fr;gap:18px}.team{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;min-width:0}
+.team-title{padding:15px 18px;font-size:23px;font-weight:750;display:flex;justify-content:space-between}.kitchen .team-title{background:var(--k)}.service .team-title{background:var(--s)}
+.team-label{font-size:13px;color:var(--muted);font-weight:500}.table-wrap{width:100%;overflow:hidden}table{width:100%;border-collapse:collapse;table-layout:fixed}
+th,td{border-top:1px solid var(--border);border-right:1px solid var(--border)}th:last-child,td:last-child{border-right:0}
+th{height:58px;background:#fafafa;padding:5px 3px;text-align:center;font-size:14px}th:first-child{width:16%}.date{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+td{height:116px;padding:6px}.name{font-weight:700;font-size:15px;padding-left:10px;background:#fff}.kitchen td:not(.name){background:var(--k2)}.service td:not(.name){background:var(--s2)}
+.cell{display:flex;flex-direction:column;gap:5px;height:103px}.status{width:100%;border:1px solid #d5d9df;border-radius:8px;background:#fff;padding:6px;font:12px Arial;outline:none}.status[data-status="Frei"]{background:var(--ok)}.status[data-status="Urlaub"]{background:var(--warn)}.status[data-status="Krank"]{background:var(--bad)}
+textarea{display:block;width:100%;flex:1;min-height:0;resize:none;border:1px solid #d5d9df;border-radius:8px;background:#fff;padding:7px;font:13px/1.2 Arial;color:#222;outline:none}textarea:focus,.status:focus{border-color:#888;box-shadow:0 0 0 2px #eee}
+.overview{margin-top:18px;background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden}.overview h2{font-size:20px;margin:0;padding:16px 18px;border-bottom:1px solid var(--border)}
+.overview-wrap{overflow:auto}.overview table{min-width:900px}.overview th,.overview td{padding:9px;text-align:center;height:auto}.overview th:first-child,.overview td:first-child{text-align:left;width:18%}.sum{font-weight:750}
+.employees{margin-top:18px;background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px 18px}.employees h2{margin:0 0 11px;font-size:20px}.chips{display:flex;flex-wrap:wrap;gap:7px}.chip{background:#f1f2f4;border-radius:999px;padding:7px 12px;font-size:14px}
+.note{color:var(--muted);font-size:13px;margin-top:15px}.saving{color:#176b2d}.error{color:#a11}
+@media(max-width:1150px){.teams{grid-template-columns:1fr}.page{padding:18px 10px}}
+@media(max-width:700px){header{display:block}h1{font-size:28px}.actions{margin-top:12px}.weekbar{grid-template-columns:1fr 1fr}.weektitle{grid-column:1/-1;grid-row:1;font-size:18px}th:first-child{width:22%}th{font-size:11px}.date{font-size:10px}.name{font-size:12px;padding-left:5px}td{padding:4px;height:102px}.cell{height:92px}.status{font-size:11px;padding:5px}textarea{font-size:11px;padding:5px}}
+@media print{body{background:#fff}.page{max-width:none;padding:0}.actions,.dbstate,.employees,.note{display:none}.weekbar{border:0;padding:0;margin:0 0 8px;display:block}.weektitle{font-size:18px}.weekbar button{display:none}.teams{gap:7px}.team{border:1px solid #999;border-radius:0}.team-title{padding:7px 10px;font-size:16px}th{height:38px;font-size:10px}th:first-child{width:15%}.date{font-size:8px}td{height:70px;padding:3px}.cell{height:63px;gap:2px}.status{border:0;font-size:8px;padding:1px}textarea{border:0;font-size:9px;padding:1px}.overview{margin-top:8px;border:1px solid #999;border-radius:0}.overview h2{font-size:14px;padding:6px}.overview th,.overview td{font-size:8px;padding:3px}}
+</style>
+</head>
+<body><div class="page">
+<header><div><h1>Restaurant Weil</h1><div class="subtitle">Wöchentlicher Schichtplan</div><div id="dbState" class="dbstate">Datenbank wird geprüft …</div></div><div class="actions"><button onclick="goToday()">Heute</button><button onclick="window.print()">Drucken</button></div></header>
+<div class="weekbar"><button onclick="changeWeek(-1)">← Vorherige Woche</button><div id="weekTitle" class="weektitle"></div><button onclick="changeWeek(1)">Nächste Woche →</button></div>
+<div class="teams">
+<section class="team kitchen"><div class="team-title"><span>🍳 Küche</span><span class="team-label">Küchenteam</span></div><div class="table-wrap"><table id="kitchenTable"></table></div></section>
+<section class="team service"><div class="team-title"><span>🍽️ Service</span><span class="team-label">Serviceteam</span></div><div class="table-wrap"><table id="serviceTable"></table></div></section>
+</div>
+<section class="overview"><h2>Automatische Wochenübersicht</h2><div class="overview-wrap"><table id="overviewTable"></table></div></section>
+<section class="employees"><h2>Mitarbeiter</h2><div class="chips"><span class="chip">Dedith</span><span class="chip">Imran</span><span class="chip">Valeria</span><span class="chip">Pal</span><span class="chip">Andre</span><span class="chip">Nadja</span><span class="chip">Methin</span><span class="chip">Ibrahim</span><span class="chip">Andreo</span></div></section>
+<div class="note">Schichtzeiten z. B. „10:00–18:00“. Frei, Urlaub und Krank werden automatisch gezählt. Nach Einrichtung der Datenbank sehen alle Mitarbeiter dieselben Einträge.</div>
+</div>
+<script>
+const teams={Küche:["Nadja","Methin","Ibrahim","Andreo","Pal"],Service:["Dedith","Imran","Valeria","Andre"]},all=[...teams.Küche,...teams.Service],days=["Mo","Di","Mi","Do","Fr","Sa","So"];
+let weekOffset=0,rows=new Map(),saveTimer=null;
+function mondayOf(x){const d=new Date(x),n=d.getDay();d.setDate(d.getDate()+(n===0?-6:1-n));d.setHours(0,0,0,0);return d}
+function dates(){const m=mondayOf(new Date());m.setDate(m.getDate()+weekOffset*7);return Array.from({length:7},(_,i)=>{const d=new Date(m);d.setDate(m.getDate()+i);return d})}
+function dk(d){return d.toISOString().slice(0,10)} function fmt(d){return d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}
+function rk(d,n){return dk(d)+"|"+n} function get(k){return rows.get(k)||{status:"Schicht",text:""}}
+function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function renderTable(id,people,ds){let h="<thead><tr><th>Mitarbeiter</th>"+ds.map((d,i)=>`<th>${days[i]}<span class="date">${fmt(d)}</span></th>`).join("")+"</tr></thead><tbody>";
+people.forEach(n=>{h+=`<tr><td class="name">${n}</td>`;ds.forEach(d=>{const k=rk(d,n),r=get(k);h+=`<td><div class="cell"><select class="status" data-key="${esc(k)}" data-status="${esc(r.status)}"><option ${r.status==="Schicht"?"selected":""}>Schicht</option><option ${r.status==="Frei"?"selected":""}>Frei</option><option ${r.status==="Urlaub"?"selected":""}>Urlaub</option><option ${r.status==="Krank"?"selected":""}>Krank</option></select><textarea data-key="${esc(k)}" placeholder="${r.status==="Schicht"?"z. B. 10:00–18:00":r.status}">${esc(r.text)}</textarea></div></td>`});h+="</tr>"});
+h+="</tbody>";document.getElementById(id).innerHTML=h;
+document.querySelectorAll("#"+id+" .status").forEach(el=>el.addEventListener("change",e=>{const k=e.target.dataset.key,r=get(k);r.status=e.target.value;e.target.dataset.status=r.status;saveRow(k,r);renderOverview()}));
+document.querySelectorAll("#"+id+" textarea").forEach(el=>el.addEventListener("input",e=>{const k=e.target.dataset.key,r=get(k);r.text=e.target.value;saveRow(k,r);renderOverview()}))}
+function saveRow(k,r){rows.set(k,r);localStorage.setItem("weil_"+k,JSON.stringify(r));clearTimeout(saveTimer);saveTimer=setTimeout(saveAllToServer,500)}
+function loadLocal(){dates().forEach(d=>all.forEach(n=>{const k=rk(d,n),v=localStorage.getItem("weil_"+k);if(v)try{rows.set(k,JSON.parse(v))}catch{}}))}
+function hours(t){const m=t.match(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/);if(!m)return 0;let a=+m[1]+m[2]/60,b=+m[3]+m[4]/60;if(b<a)b+=24;return Math.max(0,b-a)}
+function renderOverview(){const ds=dates();let h="<thead><tr><th>Mitarbeiter</th><th>Schichten</th><th>Stunden</th><th>Frei</th><th>Urlaub</th><th>Krank</th></tr></thead><tbody>";
+all.forEach(n=>{let sh=0,hr=0,fr=0,ur=0,kr=0;ds.forEach(d=>{const r=get(rk(d,n));if(r.status==="Schicht"){if(r.text.trim())sh++;hr+=hours(r.text)}else if(r.status==="Frei")fr++;else if(r.status==="Urlaub")ur++;else if(r.status==="Krank")kr++});h+=`<tr><td>${n}</td><td>${sh}</td><td>${hr?hr.toFixed(1).replace(".",","):"0"}</td><td>${fr}</td><td>${ur}</td><td>${kr}</td></tr>`});document.getElementById("overviewTable").innerHTML=h+"</tbody>"}
+async function loadServer(){try{const ds=dates(),r=await fetch(`/api/shifts?from=${dk(ds[0])}&to=${dk(ds[6])}`);if(!r.ok)throw 0;const data=await r.json();data.forEach(x=>rows.set(x.shift_date+"|"+x.employee,{status:x.status,text:x.shift_text||""}));document.getElementById("dbState").textContent="✓ Gemeinsame Datenbank verbunden";document.getElementById("dbState").className="dbstate saving";render()}catch{document.getElementById("dbState").textContent="⚠ Lokaler Modus – Datenbank noch nicht eingerichtet";document.getElementById("dbState").className="dbstate error"}}
+async function saveAllToServer(){const ds=dates(),p=[];all.forEach(n=>ds.forEach(d=>{const r=get(rk(d,n));p.push({shift_date:dk(d),employee:n,team:teams.Küche.includes(n)?"Küche":"Service",status:r.status,shift_text:r.text})}));try{const r=await fetch("/api/shifts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});if(r.ok){document.getElementById("dbState").textContent="✓ Gespeichert";document.getElementById("dbState").className="dbstate saving"}}catch{}}
+function render(){const ds=dates();document.getElementById("weekTitle").textContent=`Woche ${fmt(ds[0])} – ${fmt(ds[6])} ${ds[6].getFullYear()}`;renderTable("kitchenTable",teams.Küche,ds);renderTable("serviceTable",teams.Service,ds);renderOverview()}
+function changeWeek(n){weekOffset+=n;loadLocal();render();loadServer()}function goToday(){weekOffset=0;loadLocal();render();loadServer()}
+loadLocal();render();loadServer();
+</script></body></html>
