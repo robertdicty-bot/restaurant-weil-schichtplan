@@ -1109,6 +1109,8 @@ function renderTable(
 
 /* Daten speichern */
 
+/* Einzelne Änderung speichern */
+
 function saveRow(k,r){
 
   rows.set(k,r);
@@ -1120,10 +1122,23 @@ function saveRow(k,r){
 
   clearTimeout(saveTimer);
 
-  saveTimer=setTimeout(
-    saveAllToServer,
-    500
-  );
+  saveTimer=setTimeout(async ()=>{
+
+    const parts=k.split("|");
+
+    if(parts.length<2) return;
+
+    const date=parts[0];
+    const employee=parts.slice(1).join("|");
+
+    await saveShiftToServer(
+      new Date(date+"T12:00:00"),
+      employee
+    );
+
+  },300);
+
+  
 }
 
 
@@ -1649,29 +1664,65 @@ let syncBusy = false;
 async function loadServer(){
 
   if(syncBusy) return;
-  syncBusy = true;
+
+  syncBusy=true;
 
   try{
 
-    const ds = dates();
+    const ds=dates();
 
-    const r = await fetch(
+    const r=await fetch(
       `/api/shifts?from=${dk(ds[0])}&to=${dk(ds[6])}`,
-      { cache:"no-store" }
+      {cache:"no-store"}
     );
 
-    if(!r.ok) throw new Error("API-Fehler");
+    if(!r.ok)
+      throw new Error("API-Fehler");
 
-    const data = await r.json();
+    const data=await r.json();
 
-    data.forEach(x => {
+    let changed=false;
 
-      const key = x.shift_date.slice(0,10) + "|" + x.employee;
+    data.forEach(x=>{
 
-      rows.set(key,{
-        status:x.status || "Schicht",
-        text:x.shift_text || ""
-      });
+      const key=
+        x.shift_date.slice(0,10)
+        +"|"
+        +x.employee;
+
+      const newStatus=
+        x.status || "Schicht";
+
+      const newText=
+        x.shift_text || "";
+
+      const old=rows.get(key);
+
+      if(
+        !old ||
+        old.status!==newStatus ||
+        old.text!==newText
+      ){
+
+        rows.set(
+          key,
+          {
+            status:newStatus,
+            text:newText
+          }
+        );
+
+        localStorage.setItem(
+          "weil_"+key,
+          JSON.stringify({
+            status:newStatus,
+            text:newText
+          })
+        );
+
+        changed=true;
+
+      }
 
     });
 
@@ -1681,7 +1732,9 @@ async function loadServer(){
     document.getElementById("dbState").className =
       "dbstate saving";
 
-    render();
+    if(changed){
+      render();
+    }
 
   }catch(error){
 
@@ -1693,11 +1746,11 @@ async function loadServer(){
 
   }finally{
 
-    syncBusy = false;
+    syncBusy=false;
 
   }
-}
 
+}
 
 /* Einzelne Änderung zentral speichern */
 
