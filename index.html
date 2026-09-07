@@ -1641,128 +1641,161 @@ async function shareEmployeePlan(name){
 
 /* Datenbank laden */
 
+/* Datenbank-Synchronisierung */
+
+let syncTimer = null;
+let syncBusy = false;
+
 async function loadServer(){
+
+  if(syncBusy) return;
+  syncBusy = true;
 
   try{
 
-    const ds=dates();
+    const ds = dates();
 
-    const r=await fetch(
-      `/api/shifts?from=${dk(ds[0])}&to=${dk(ds[6])}`
+    const r = await fetch(
+      `/api/shifts?from=${dk(ds[0])}&to=${dk(ds[6])}`,
+      { cache:"no-store" }
     );
 
-    if(!r.ok)throw 0;
+    if(!r.ok) throw new Error("API-Fehler");
 
-    const data=await r.json();
+    const data = await r.json();
 
-    data.forEach(x=>{
+    data.forEach(x => {
 
-      rows.set(
-        x.shift_date+"|"+x.employee,
-        {
-          status:x.status,
-          text:x.shift_text||""
-        }
-      );
+      const key = x.shift_date.slice(0,10) + "|" + x.employee;
 
-    });
-
-    document.getElementById(
-      "dbState"
-    ).textContent=
-      "✓ Gemeinsame Datenbank verbunden";
-
-    document.getElementById(
-      "dbState"
-    ).className=
-      "dbstate saving";
-
-    render();
-
-  }catch{
-
-    document.getElementById(
-      "dbState"
-    ).textContent=
-      "⚠ Lokaler Modus – Datenbank noch nicht eingerichtet";
-
-    document.getElementById(
-      "dbState"
-    ).className=
-      "dbstate error";
-  }
-}
-
-
-/* Datenbank speichern */
-
-async function saveAllToServer(){
-
-  const ds=dates();
-  const p=[];
-
-  allPeople().forEach(n=>{
-
-    ds.forEach(d=>{
-
-      const r=get(
-        rk(d,n)
-      );
-
-      p.push({
-
-        shift_date:dk(d),
-
-        employee:n,
-
-        team:
-          teams.Küche.includes(n)
-            ?"Küche"
-            :"Service",
-
-        status:r.status,
-
-        shift_text:r.text
-
+      rows.set(key,{
+        status:x.status || "Schicht",
+        text:x.shift_text || ""
       });
 
     });
 
-  });
+    document.getElementById("dbState").textContent =
+      "✓ Gemeinsame Datenbank verbunden";
 
+    document.getElementById("dbState").className =
+      "dbstate saving";
+
+    render();
+
+  }catch(error){
+
+    document.getElementById("dbState").textContent =
+      "⚠ Datenbank nicht erreichbar";
+
+    document.getElementById("dbState").className =
+      "dbstate error";
+
+  }finally{
+
+    syncBusy = false;
+
+  }
+}
+
+
+/* Einzelne Änderung zentral speichern */
+
+async function saveShiftToServer(date, employee){
+
+  const r = get(
+    rk(date, employee)
+  );
+
+  const department =
+    teams.Küche.includes(employee)
+      ? "Küche"
+      : "Service";
 
   try{
 
-    const r=await fetch(
+    const response = await fetch(
       "/api/shifts",
       {
         method:"POST",
 
         headers:{
-          "Content-Type":
-            "application/json"
+          "Content-Type":"application/json"
         },
 
-        body:JSON.stringify(p)
+        body:JSON.stringify([
+          {
+            shift_date:dk(date),
+            employee:employee,
+            department:department,
+            team:department,
+            status:r.status,
+            shift_text:r.text
+          }
+        ])
       }
     );
 
-    if(r.ok){
+    if(!response.ok)
+      throw new Error("Speichern fehlgeschlagen");
 
-      document.getElementById(
-        "dbState"
-      ).textContent=
-        "✓ Gespeichert";
+    document.getElementById("dbState").textContent =
+      "✓ Gespeichert";
 
-      document.getElementById(
-        "dbState"
-      ).className=
-        "dbstate saving";
-    }
+    document.getElementById("dbState").className =
+      "dbstate saving";
 
-  }catch{}
+  }catch(error){
+
+    document.getElementById("dbState").textContent =
+      "⚠ Speichern fehlgeschlagen";
+
+    document.getElementById("dbState").className =
+      "dbstate error";
+
+  }
+
 }
 
+
+/* Kompatibilität mit vorhandenen Aufrufen */
+
+async function saveAllToServer(){
+
+  const ds = dates();
+
+  for(const employee of allPeople()){
+
+    for(const date of ds){
+
+      await saveShiftToServer(
+        date,
+        employee
+      );
+
+    }
+
+  }
+
+}
+
+
+/* Automatische Synchronisierung */
+
+function startServerSync(){
+
+  if(syncTimer)
+    clearInterval(syncTimer);
+
+  loadServer();
+
+  syncTimer = setInterval(() => {
+
+    loadServer();
+
+  },5000);
+
+}
 
 /* Hauptdarstellung */
 
@@ -1863,6 +1896,8 @@ render();
 
 loadServer();
 
+
+startServerSync();
 </script>
 
 </body>
