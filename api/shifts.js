@@ -10,7 +10,13 @@ export default async function handler(req, res) {
       const { from, to } = req.query;
 
       const rows = await sql`
-        SELECT shift_date, employee, team, status, shift_text
+        SELECT
+          shift_date,
+          employee,
+          department,
+          team,
+          status,
+          shift_text
         FROM shifts
         WHERE shift_date >= ${from}
           AND shift_date <= ${to}
@@ -32,17 +38,26 @@ export default async function handler(req, res) {
       for (const shift of shifts) {
         await sql`
           INSERT INTO shifts
-            (shift_date, employee, team, status, shift_text)
+            (
+              shift_date,
+              employee,
+              department,
+              team,
+              status,
+              shift_text
+            )
           VALUES
             (
               ${shift.shift_date},
               ${shift.employee},
-              ${shift.team},
-              ${shift.status},
+              ${shift.department || shift.team || ""},
+              ${shift.team || ""},
+              ${shift.status || "Schicht"},
               ${shift.shift_text || ""}
             )
           ON CONFLICT (shift_date, employee)
           DO UPDATE SET
+            department = EXCLUDED.department,
             team = EXCLUDED.team,
             status = EXCLUDED.status,
             shift_text = EXCLUDED.shift_text
