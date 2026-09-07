@@ -95,16 +95,20 @@ export default async function handler(req, res) {
     "application/json"
   );
 
-  if (req.method === "GET") {
+if (req.method === "GET") {
 
-    const username = getLoggedInUser(req);
-
-    return res.status(200).json({
-      loggedIn: !!username,
-      username: username || null
-    });
-  }
-
+  return res.status(200).json({
+    auth_secret: !!process.env.AUTH_SECRET,
+    user1: !!process.env.APP_USER_1,
+    pass1: !!process.env.APP_PASS_1,
+    user1_length: (process.env.APP_USER_1 || "").length,
+    pass1_length: (process.env.APP_PASS_1 || "").length,
+    user2: !!process.env.APP_USER_2,
+    pass2: !!process.env.APP_PASS_2,
+    user3: !!process.env.APP_USER_3,
+    pass3: !!process.env.APP_PASS_3
+  });
+}
   if (req.method === "POST") {
 
     const {
