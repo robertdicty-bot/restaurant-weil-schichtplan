@@ -445,6 +445,102 @@ th:first-child{
 </head>
 
 <body>
+<div id="loginScreen" style="
+  position:fixed;
+  inset:0;
+  background:#f4f6f8;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:99999;
+  font-family:Arial,sans-serif;
+">
+
+  <div style="
+    width:min(90%,380px);
+    background:white;
+    padding:30px;
+    border-radius:18px;
+    box-shadow:0 10px 35px rgba(0,0,0,.15);
+    box-sizing:border-box;
+  ">
+
+    <h2 style="
+      margin:0 0 8px;
+      text-align:center;
+    ">
+      Schichtplan
+    </h2>
+
+    <p style="
+      margin:0 0 25px;
+      text-align:center;
+      color:#666;
+    ">
+      Bitte anmelden
+    </p>
+
+    <input
+      id="loginUsername"
+      type="text"
+      autocomplete="username"
+      placeholder="Benutzername"
+      style="
+        width:100%;
+        box-sizing:border-box;
+        padding:13px;
+        margin-bottom:12px;
+        border:1px solid #d6dce3;
+        border-radius:10px;
+        font-size:16px;
+      "
+    >
+
+    <input
+      id="loginPassword"
+      type="password"
+      autocomplete="current-password"
+      placeholder="Passwort"
+      style="
+        width:100%;
+        box-sizing:border-box;
+        padding:13px;
+        margin-bottom:15px;
+        border:1px solid #d6dce3;
+        border-radius:10px;
+        font-size:16px;
+      "
+    >
+
+    <button
+      id="loginButton"
+      type="button"
+      style="
+        width:100%;
+        padding:13px;
+        border:0;
+        border-radius:10px;
+        background:#111827;
+        color:white;
+        font-size:16px;
+        cursor:pointer;
+      "
+    >
+      Anmelden
+    </button>
+
+    <div
+      id="loginError"
+      style="
+        margin-top:15px;
+        color:#c62828;
+        text-align:center;
+        min-height:20px;
+      "
+    ></div>
+
+  </div>
+</div>
 
 <div class="page">
 
@@ -1947,10 +2043,197 @@ loadLocal();
 
 render();
 
-loadServer();
+
+/* Login */
+
+async function checkLogin(){
+
+  try{
+
+    const response = await fetch(
+      "/api/auth",
+      {
+        method:"GET",
+        cache:"no-store"
+      }
+    );
+
+    const data = await response.json();
+
+    if(data.loggedIn){
+
+      document.getElementById(
+        "loginScreen"
+      ).style.display="none";
+
+      return true;
+
+    }
+
+  }catch(error){
+
+    console.error(
+      "Login-Prüfung fehlgeschlagen:",
+      error
+    );
+
+  }
+
+  return false;
+
+}
 
 
+async function doLogin(){
+
+  const username =
+    document.getElementById(
+      "loginUsername"
+    ).value.trim();
+
+  const password =
+    document.getElementById(
+      "loginPassword"
+    ).value;
+
+  const error =
+    document.getElementById(
+      "loginError"
+    );
+
+  const button =
+    document.getElementById(
+      "loginButton"
+    );
+
+  error.textContent="";
+
+  if(!username || !password){
+
+    error.textContent=
+      "Bitte Benutzername und Passwort eingeben.";
+
+    return;
+
+  }
+
+  button.disabled=true;
+  button.textContent="Anmelden...";
+
+  try{
+
+    const response = await fetch(
+      "/api/auth",
+      {
+        method:"POST",
+
+        headers:{
+          "Content-Type":
+            "application/json"
+        },
+
+        credentials:"same-origin",
+
+        body:JSON.stringify({
+          username,
+          password
+        })
+      }
+    );
+
+    const data =
+      await response.json();
+
+    if(!response.ok){
+
+      error.textContent=
+        data.error ||
+        "Anmeldung fehlgeschlagen.";
+
+      return;
+
+    }
+
+    document.getElementById(
+      "loginScreen"
+    ).style.display="none";
+
+    document.getElementById(
+      "loginPassword"
+    ).value="";
+
+    loadServer();
 startServerSync();
+
+  }catch(error){
+
+    console.error(
+      "Login-Fehler:",
+      error
+    );
+
+    document.getElementById(
+      "loginError"
+    ).textContent=
+      "Verbindung zum Server fehlgeschlagen.";
+
+  }finally{
+
+    button.disabled=false;
+    button.textContent="Anmelden";
+
+  }
+
+}
+
+
+async function logout(){
+
+  try{
+
+    await fetch(
+      "/api/auth",
+      {
+        method:"DELETE",
+        credentials:"same-origin"
+      }
+    );
+
+  }catch(error){
+
+    console.error(
+      "Logout-Fehler:",
+      error
+    );
+
+  }
+
+  location.reload();
+
+}
+
+
+document
+  .getElementById("loginButton")
+  .addEventListener(
+    "click",
+    doLogin
+  );
+
+
+document
+  .getElementById("loginPassword")
+  .addEventListener(
+    "keydown",
+    event=>{
+      if(event.key==="Enter"){
+        doLogin();
+      }
+    }
+  );
+
+
+checkLogin();
 </script>
 
 </body>

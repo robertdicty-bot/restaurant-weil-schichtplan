@@ -1,12 +1,13 @@
 import { neon } from "@neondatabase/serverless";
-
+import { requireAuth } from "./auth.js";
 const sql = neon(process.env.DATABASE_URL);
 
 export default async function handler(req, res) {
   res.setHeader("Content-Type", "application/json");
 
   if (req.method === "GET") {
-    try {
+       if (!requireAuth(req, res)) return;
+ try {
       const { from, to } = req.query;
 
       const rows = await sql`
@@ -32,6 +33,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
+    if (!requireAuth(req, res)) return;
     try {
       const shifts = Array.isArray(req.body) ? req.body : [];
 
