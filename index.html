@@ -1308,11 +1308,17 @@ function renderOverview(){
     <thead>
       <tr>
         <th>Mitarbeiter</th>
-        <th>Schichten</th>
-        <th>Stunden</th>
-        <th>Frei</th>
-        <th>Urlaub</th>
-        <th>Krank</th>
+        ${
+          ds.map((d,i)=>`
+            <th>
+              ${days[i]}
+              <span class="date">
+                ${fmt(d)}
+              </span>
+            </th>
+          `).join("")
+        }
+        <th>Std.</th>
       </tr>
     </thead>
 
@@ -1321,11 +1327,14 @@ function renderOverview(){
 
   allPeople().forEach(n=>{
 
-    let sh=0;
-    let hr=0;
-    let fr=0;
-    let ur=0;
-    let kr=0;
+    let totalHours=0;
+
+    h+=`
+      <tr>
+        <td class="name">
+          ${esc(n)}
+        </td>
+    `;
 
     ds.forEach(d=>{
 
@@ -1333,46 +1342,47 @@ function renderOverview(){
         rk(d,n)
       );
 
-      if(r.status==="Schicht"){
+      if(
+        r.status==="Schicht" &&
+        r.text.trim()!==""
+      ){
 
-        if(r.text.trim()){
-          sh++;
-        }
+        totalHours+=hours(r.text);
 
-        hr+=hours(r.text);
+        h+=`
+          <td>
+            ${esc(
+              r.text
+                .replace(/:00/g,"")
+            )}
+          </td>
+        `;
 
-      }else if(r.status==="Frei"){
+      }else{
 
-        fr++;
-
-      }else if(r.status==="Urlaub"){
-
-        ur++;
-
-      }else if(r.status==="Krank"){
-
-        kr++;
+        h+=`
+          <td>
+            ${esc(r.status || "Frei")}
+          </td>
+        `;
 
       }
 
     });
 
     h+=`
-      <tr>
-        <td>${esc(n)}</td>
-        <td>${sh}</td>
         <td>
           ${
-            hr
-              ?hr.toFixed(1).replace(".",",")
-              :"0"
+            totalHours
+              ? totalHours
+                  .toFixed(1)
+                  .replace(".",",")
+              : "0"
           }
         </td>
-        <td>${fr}</td>
-        <td>${ur}</td>
-        <td>${kr}</td>
       </tr>
     `;
+
   });
 
   h+=`
@@ -1382,8 +1392,8 @@ function renderOverview(){
   document.getElementById(
     "overviewTable"
   ).innerHTML=h;
-}
 
+}
 
 /* Mitarbeiterliste */
 
